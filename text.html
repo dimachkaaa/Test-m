@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Бункер - Игра по сиду</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 10px;
+            padding-bottom: 80px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+            color: #ffcc00;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+        
+        .game-phase {
+            display: inline-block;
+            background: #3498db;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:hover, .btn:active {
+            background: linear-gradient(to right, #2980b9, #1f639b);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-yellow {
+            background: linear-gradient(to right, #ffcc00, #e6b800);
+        }
+        
+        .btn-yellow:hover, .btn-yellow:active {
+            background: linear-gradient(to right, #e6b800, #cc9c00);
+        }
+        
+        .btn-red {
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+        }
+        
+        .btn-red:hover, .btn-red:active {
+            background: linear-gradient(to right, #c0392b, #a93226);
+        }
+        
+        .btn-green {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+        }
+        
+        .btn-green:hover, .btn-green:active {
+            background: linear-gradient(to right, #27ae60, #219653);
+        }
+        
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s;
+        }
+        
+        .player-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .player-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .player-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        .player-status {
+            font-size: 0.9rem;
+            padding: 3px 10px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .player-status.alive {
+            background: rgba(46, 204, 113, 0.3);
+            color: #2ecc71;
+        }
+        
+        .player-status.eliminated {
+            background: rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+        }
+        
+        .characteristics {
+            margin-top: 10px;
+        }
+        
+        .characteristic {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .characteristic:last-child {
+            border-bottom: none;
+        }
+        
+        .char-name {
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .char-value {
+            text-align: right;
+            max-width: 60%;
+        }
+        
+        .voting-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .vote-btn {
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .vote-btn:hover, .vote-btn:active, .vote-btn.selected {
+            background: rgba(52, 152, 219, 0.3);
+            border-color: #3498db;
+        }
+        
+        .results {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+        
+        .winner {
+            font-size: 1.8rem;
+            color: #ffcc00;
+            margin: 15px 0;
+            animation: pulse 2s infinite;
+        }
+        
+        .vote-count {
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .rules {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .rules h3 {
+            color: #ffcc00;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+        
+        .rules p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .rules ol {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .rules li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .seed-code {
+            font-size: 2.5rem;
+            font-weight: bold;
+            letter-spacing: 5px;
+            text-align: center;
+            color: #ffcc00;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: monospace;
+            user-select: all;
+        }
+        
+        .input-group {
+            margin: 15px 0;
+        }
+        
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .catastrophe-card {
+            background: rgba(231, 76, 60, 0.1);
+            border: 2px solid rgba(231, 76, 60, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .catastrophe-title {
+            color: #e74c3c;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .catastrophe-description {
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+        
+        .game-info {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .share-instructions {
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .footer-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-size: 0.9rem;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: color 0.3s;
+            flex: 1;
+        }
+        
+        .nav-btn i {
+            display: block;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .nav-btn.active {
+            color: #3498db;
+        }
+        
+        .nav-btn:hover, .nav-btn:active {
+            color: #ffcc00;
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .player-card {
+                padding: 12px;
+            }
+            
+            .btn {
+                padding: 14px;
+                font-size: 1rem;
+            }
+            
+            .voting-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .seed-code {
+                font-size: 2rem;
+                letter-spacing: 3px;
+            }
+        }
+        
+        .copy-btn {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .player-number {
+            font-size: 1.1rem;
+            color: #ffcc00;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-radiation-alt"></i> Бункер</h1>
+            <div class="subtitle">Игра с синхронизацией через seed</div>
+            <div class="game-phase" id="gamePhase">Начало</div>
+        </header>
+        
+        <!-- Начальный экран -->
+        <div id="startScreen" class="screen active">
+            <div class="rules">
+                <h3>Как играть:</h3>
+                <ol>
+                    <li><strong>Ведущий</strong> создает игру и получает seed-код</li>
+                    <li><strong>Ведущий</strong> сообщает этот код остальным игрокам</li>
+                    <li><strong>Игроки</strong> вводят код и свой номер игрока</li>
+                    <li><strong>Каждый видит только свою карту</strong></li>
+                    <li>Обсуждение и голосование происходят устно вживую</li>
+                    <li>В конце определяются выжившие</li>
+                </ol>
+            </div>
+            
+            <button class="btn btn-yellow" id="createGameBtn">
+                <i class="fas fa-plus-circle"></i> Создать игру (ведущий)
+            </button>
+            
+            <button class="btn" id="joinGameBtn">
+                <i class="fas fa-user-plus"></i> Присоединиться к игре
+            </button>
+            
+            <button class="btn" id="singlePlayerBtn">
+                <i class="fas fa-user"></i> Одиночная игра (демо)
+            </button>
+        </div>
+        
+        <!-- Экран создания игры -->
+        <div id="createScreen" class="screen">
+            <div class="rules">
+                <h3>Вы создаете игру</h3>
+                <p>Создайте seed-код и сообщите его остальным игрокам. Укажите количество игроков.</p>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Количество игроков (3-12):</label>
+                <input type="number" id="playerCount" class="input-field" min="3" max="12" value="6">
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Дополнительный параметр (опционально):</label>
+                <input type="text" id="customSeed" class="input-field" placeholder="Любое слово или число">
+            </div>
+            
+            <button class="btn btn-yellow" id="generateSeedBtn">
+                <i class="fas fa-key"></i> Сгенерировать seed-код
+            </button>
+            
+            <div id="seedResult" class="hidden">
+                <h3 style="text-align: center; color: #ffcc00; margin-top: 20px;">Seed-код игры:</h3>
+                <div class="seed-code" id="seedCodeDisplay">XXXXXX</div>
+                <p style="text-align: center;">Сообщите этот код всем игрокам</p>
+                
+                <div class="share-instructions">
+                    <h4><i class="fas fa-info-circle"></i> Инструкция для игроков:</h4>
+                    <p>1. Игроки открывают игру на своих устройствах</p>
+                    <p>2. Выбирают "Присоединиться к игре"</p>
+                    <p>3. Вводят код: <strong id="seedCodeInstruction">XXXXXX</strong></p>
+                    <p>4. Вводят номер игрока, который вы им сообщите</p>
+                </div>
+                
+                <button class="btn btn-green" id="startCreatedGameBtn">
+                    <i class="fas fa-play"></i> Начать игру
+                </button>
+            </div>
+        </div>
+        
+        <!-- Экран присоединения -->
+        <div id="joinScreen" class="screen">
+            <div class="rules">
+                <h3>Присоединиться к игре</h3>
+                <p>Введите seed-код, который вам сообщил ведущий, и ваш номер игрока.</p>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Seed-код игры:</label>
+                <input type="text" id="inputSeedCode" class="input-field" placeholder="Введите 6-значный код" maxlength="6">
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Ваш номер игрока (спросите у ведущего):</label>
+                <input type="number" id="inputPlayerNumber" class="input-field" min="1" max="12" placeholder="1">
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Ваше имя (опционально):</label>
+                <input type="text" id="inputPlayerName" class="input-field" placeholder="Имя">
+            </div>
+            
+            <button class="btn btn-yellow" id="joinWithSeedBtn">
+                <i class="fas fa-sign-in-alt"></i> Присоединиться
+            </button>
+            
+            <div id="joinError" class="hidden" style="color: #e74c3c; text-align: center; margin-top: 15px;">
+                Неверный код или номер игрока
+            </div>
+        </div>
+        
+        <!-- Экран игры -->
+        <div id="gameScreen" class="screen">
+            <div class="game-info">
+                <div class="player-number">Игрок #<span id="currentPlayerNumber">1</span></div>
+                <div style="margin-top: 10px;">
+                    <strong>Seed игры:</strong> <span id="currentSeedCode" style="font-family: monospace;">XXXXXX</span>
+                </div>
+            </div>
+            
+            <!-- Карта катастрофы -->
+            <div id="catastropheInfo" class="catastrophe-card hidden">
+                <div class="catastrophe-title" id="catastropheTitle">Катастрофа</div>
+                <div class="catastrophe-description" id="catastropheDescription">Описание</div>
+            </div>
+            
+            <!-- Карта игрока -->
+            <div id="playerCardContainer">
+                <div class="player-card">
+                    <div class="player-card-header">
+                        <div class="player-name" id="playerNameDisplay">Игрок 1</div>
+                        <div class="player-status alive">Ваша карта</div>
+                    </div>
+                    <div class="characteristics" id="playerCharacteristics">
+                        <!-- Характеристики будут загружены здесь -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Правила обсуждения -->
+            <div class="rules" id="discussionRules">
+                <h3>Этап обсуждения</h3>
+                <p>Обсудите с другими игроками, кто должен попасть в бункер. Учитывайте характеристики каждого.</p>
+                <p>У вас есть <strong>2 минуты</strong> на обсуждение.</p>
+            </div>
+            
+            <!-- Таймер обсуждения -->
+            <div id="discussionTimer" class="hidden" style="text-align: center; margin: 20px 0;">
+                <h3 style="color: #ffcc00;">Обсуждение</h3>
+                <div style="font-size: 2.5rem; font-weight: bold;" id="timerDisplay">02:00</div>
+                <button class="btn btn-yellow" id="startDiscussionBtn" style="width: 80%; margin: 10px auto;">
+                    <i class="fas fa-play"></i> Начать обсуждение
+                </button>
+            </div>
+            
+            <!-- Голосование -->
+            <div id="votingSection" class="hidden">
+                <div class="rules">
+                    <h3>Этап голосования</h3>
+                    <p>Голосуйте устно. Ведущий объявит результаты.</p>
+                </div>
+                
+                <div id="votingOptions" class="voting-options">
+                    <!-- Варианты для голосования появятся здесь -->
+                </div>
+            </div>
+            
+            <!-- Результаты голосования -->
+            <div id="votingResults" class="results hidden">
+                <h3>Результаты голосования</h3>
+                <div id="votesList"></div>
+                <button class="btn btn-green" id="nextRoundBtn">
+                    <i class="fas fa-arrow-right"></i> Следующий раунд
+                </button>
+            </div>
+            
+            <!-- Финальные результаты -->
+            <div id="finalResults" class="results hidden">
+                <h2>Игра завершена!</h2>
+                <div class="winner" id="winnerText">Победители</div>
+                <div id="survivorsList"></div>
+                <button class="btn btn-yellow" id="newGameBtn">
+                    <i class="fas fa-redo"></i> Новая игра
+                </button>
+            </div>
+        </div>
+        
+        <!-- Одиночная игра -->
+        <div id="singlePlayerScreen" class="screen">
+            <div class="rules">
+                <h3>Одиночная игра (демо)</h3>
+                <p>Попробуйте игру в одиночном режиме. Будут созданы случайные игроки.</p>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Количество игроков (3-8):</label>
+                <input type="number" id="singlePlayerCount" class="input-field" min="3" max="8" value="5">
+            </div>
+            
+            <button class="btn btn-yellow" id="startSinglePlayerBtn">
+                <i class="fas fa-play"></i> Начать одиночную игру
+            </button>
+        </div>
+    </div>
+    
+    <!-- Нижняя навигация -->
+    <div class="footer-nav">
+        <button class="nav-btn" data-screen="startScreen">
+            <i class="fas fa-home"></i> Главная
+        </button>
+        <button class="nav-btn" data-screen="gameScreen">
+            <i class="fas fa-gamepad"></i> Игра
+        </button>
+    </div>
+    
+    <script>
+        // Данные для генерации
+        const professions = [
+            "Врач", "Инженер", "Ученый", "Фермер", "Солдат", "Учитель", 
+            "Повар", "Электрик", "Строитель", "Программист", "Психолог", "Механик",
+            "Пилот", "Химик", "Биолог", "Геолог", "Метеоролог", "Сапёр"
+        ];
+        
+        const healthStatuses = [
+            "Здоров", "Хроническое заболевание", "Инвалидность", 
+            "Аллергия", "Отличное здоровье", "Травмирован",
+            "Слепой на один глаз", "Глухой на одно ухо", "Астма",
+            "Диабет", "Гипертония", "Аллергия на пенициллин"
+        ];
+        
+        const hobbies = [
+            "Садоводство", "Ремонт техники", "Кулинария", "Спорт", 
+            "Чтение", "Охота", "Рыбалка", "Шитье", "Строительство",
+            "Выживание в лесу", "Оказание первой помощи", "Радиоэлектроника"
+        ];
+        
+        const phobias = [
+            "Клаустрофобия", "Арахнофобия", "Акрофобия", "Агорафобия",
+            "Гемофобия", "Никтофобия", "Пирофобия", "Танатофобия",
+            "Авиафобия", "Аквафобия", "Кинофобия", "Дентофобия"
+        ];
+        
+        const additionalInfo = [
+            "Имеет детей", "Бывший спортсмен", "Вегетарианец", "Курит",
+            "Алкоголик", "Наркоман", "Беременна (3 месяц)", "Знает 5 языков",
+            "Имеет оружие", "Имеет запасы еды", "Знает медицину", "Выживал в горах",
+            "Прошел военную подготовку", "Умеет делать ловушки", "Знает химию"
+        ];
+        
+        const catastrophes = [
+            {
+                title: "Ядерная война",
+                description: "Произошел обмен ядерными ударами. Радиация, разрушенная инфраструктура, зима длиной в несколько лет."
+            },
+            {
+                title: "Пандемия",
+                description: "Смертельный вирус уничтожил 90% населения. Выжившие заражены, но имеют иммунитет."
+            },
+            {
+                title: "Зомби-апокалипсис",
+                description: "Неизвестный патоген превращает людей в агрессивных существ. Они охотятся на живых."
+            },
+            {
+                title: "Падение астероида",
+                description: "Крупный астероид упал на Землю. Пыль закрыла солнце, началась вулканическая зима."
+            },
+            {
+                title: "Восстание машин",
+                description: "Искусственный интеллект вышел из-под контроля. Роботы уничтожают человечество."
+            },
+            {
+                title: "Всемирный потоп",
+                description: "Таяние ледников привело к подъему уровня океана на 100 метров. Остались лишь острова."
+            },
+            {
+                title: "Солнечная вспышка",
+                description: "Мощная солнечная вспышка уничтожила всю электронику. Цивилизация отброшена в XIX век."
+            },
+            {
+                title: "Инопланетное вторжение",
+                description: "Пришельцы захватывают планету. Они либо уничтожают, либо порабощают людей."
+            }
+        ];
+        
+        // Глобальные переменные
+        let gameSeed = "";
+        let players = [];
+        let currentPlayerIndex = 0;
+        let playerCount = 6;
+        let currentPlayerNumber = 1;
+        let currentCatastrophe = null;
+        let bunkerSize = 4;
+        let eliminatedPlayers = [];
+        let gameState = 'setup'; // setup, discussion, voting, results, end
+        
+        // DOM элементы
+        const startScreen = document.getElementById('startScreen');
+        const createScreen = document.getElementById('createScreen');
+        const joinScreen = document.getElementById('joinScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const singlePlayerScreen = document.getElementById('singlePlayerScreen');
+        const gamePhase = document.getElementById('gamePhase');
+        
+        // Функция для генерации seed
+        function generateSeed(length = 6) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Исключаем похожие символы
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+        
+        // Детерминированный генератор случайных чисел на основе seed
+        function createSeededRandom(seed) {
+            // Создаем хэш из seed
+            let hash = 0;
+            for (let i = 0; i < seed.length; i++) {
+                hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+                hash |= 0; // Преобразуем в 32-битное целое число
+            }
+            
+            // Используем простой LCG (Linear Congruential Generator)
+            let currentSeed = Math.abs(hash);
+            
+            return function() {
+                currentSeed = (currentSeed * 9301 + 49297) % 233280;
+                return currentSeed / 233280;
+            };
+        }
+        
+        // Получить случайный элемент из массива с использованием seeded random
+        function getRandomItem(arr, randomFunc) {
+            return arr[Math.floor(randomFunc() * arr.length)];
+        }
+        
+        // Генерация возраста (18-70 лет)
+        function generateAge(randomFunc) {
+            return Math.floor(randomFunc() * 53) + 18; // 18-70 лет
+        }
+        
+        // Создание игрока на основе seed и индекса
+        function createPlayerFromSeed(seed, playerIndex, playerName = null) {
+            // Создаем уникальный seed для этого игрока
+            const playerSeed = seed + playerIndex;
+            const random = createSeededRandom(playerSeed);
+            
+            // Генерируем характеристики
+            const age = generateAge(random);
+            const gender = random() > 0.5 ? "Мужчина" : "Женщина";
+            
+            return {
+                id: playerIndex,
+                name: playerName || `Игрок ${playerIndex}`,
+                profession: getRandomItem(professions, random),
+                age: age,
+                gender: gender,
+                health: getRandomItem(healthStatuses, random),
+                hobby: getRandomItem(hobbies, random),
+                phobia: getRandomItem(phobias, random),
+                additionalInfo: getRandomItem(additionalInfo, random),
+                isAlive: true,
+                votes: 0
+            };
+        }
+        
+        // Генерация катастрофы на основе seed
+        function generateCatastrophe(seed) {
+            const random = createSeededRandom(seed + "catastrophe");
+            return getRandomItem(catastrophes, random);
+        }
+        
+        // Генерация размера бункера на основе seed
+        function generateBunkerSize(seed, playerCount) {
+            const random = createSeededRandom(seed + "bunker");
+            // Бункер вмещает от 2 до playerCount-1 человек
+            return Math.floor(random() * (playerCount - 2)) + 2;
+        }
+        
+        // Инициализация игры по seed
+        function initGameFromSeed(seed, totalPlayers, currentPlayerNum, playerName = null) {
+            gameSeed = seed;
+            playerCount = totalPlayers;
+            currentPlayerNumber = currentPlayerNum;
+            
+            // Генерация катастрофы
+            currentCatastrophe = generateCatastrophe(seed);
+            
+            // Генерация размера бункера
+            bunkerSize = generateBunkerSize(seed, playerCount);
+            
+            // Генерация всех игроков
+            players = [];
+            for (let i = 1; i <= playerCount; i++) {
+                const name = (i === currentPlayerNumber && playerName) ? playerName : `Игрок ${i}`;
+                players.push(createPlayerFromSeed(seed, i, name));
+            }
+            
+            // Сброс состояния игры
+            eliminatedPlayers = [];
+            gameState = 'setup';
+            
+            // Обновление интерфейса
+            updateGamePhase('Подготовка');
+            showScreen('gameScreen');
+            updateNavigation();
+            
+            // Отображение информации
+            displayGameInfo();
+            displayPlayerCard();
+            displayCatastrophe();
+        }
+        
+        // Отображение информации об игре
+        function displayGameInfo() {
+            document.getElementById('currentPlayerNumber').textContent = currentPlayerNumber;
+            document.getElementById('currentSeedCode').textContent = gameSeed;
+        }
+        
+        // Отображение карты игрока
+        function displayPlayerCard() {
+            if (currentPlayerNumber < 1 || currentPlayerNumber > players.length) {
+                document.getElementById('playerCardContainer').innerHTML = 
+                    '<div class="player-card"><p style="text-align: center; color: #e74c3c;">Неверный номер игрока</p></div>';
+                return;
+            }
+            
+            const player = players[currentPlayerNumber - 1];
+            document.getElementById('playerNameDisplay').textContent = player.name;
+            
+            const characteristicsHTML = `
+                <div class="characteristic">
+                    <span class="char-name">Профессия:</span>
+                    <span class="char-value">${player.profession}</span>
+                </div>
+                <div class="characteristic">
+                    <span class="char-name">Возраст:</span>
+                    <span class="char-value">${player.age} лет</span>
+                </div>
+                <div class="characteristic">
+                    <span class="char-name">Пол:</span>
+                    <span class="char-value">${player.gender}</span>
+                </div>
+                <div class="characteristic">
+                    <span class="char-name">Здоровье:</span>
+                    <span class="char-value">${player.health}</span>
+                </div>
+                <div class="characteristic">
+                    <span class="char-name">Хобби:</span>
+                    <span class="char-value">${player.hobby}</span>
+                </div>
+                <div class="characteristic">
+                    <span class="char-name">Фобия:</span>
+                    <span class="char-value">${player.phobia}</span>
+                </div>
+                <div class="characteristic">
+                    <span class="char-name">Дополнительно:</span>
+                    <span class="char-value">${player.additionalInfo}</span>
+                </div>
+            `;
+            
+            document.getElementById('playerCharacteristics').innerHTML = characteristicsHTML;
+        }
+        
+        // Отображение катастрофы
+        function displayCatastrophe() {
+            if (currentCatastrophe) {
+                document.getElementById('catastropheTitle').textContent = currentCatastrophe.title;
+                document.getElementById('catastropheDescription').textContent = currentCatastrophe.description;
+                document.getElementById('catastropheInfo').classList.remove('hidden');
+            }
+        }
+        
+        // Начать обсуждение
+        function startDiscussion() {
+            gameState = 'discussion';
+            updateGamePhase('Обсуждение');
+            
+            document.getElementById('discussionTimer').classList.remove('hidden');
+            document.getElementById('startDiscussionBtn').classList.add('hidden');
+            
+            let timeLeft = 120; // 2 минуты в секундах
+            updateTimerDisplay(timeLeft);
+            
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay(timeLeft);
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endDiscussion();
+                }
+            }, 1000);
+        }
+        
+        // Обновление таймера
+        function updateTimerDisplay(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            document.getElementById('timerDisplay').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // Завершение обсуждения
+        function endDiscussion() {
+            document.getElementById('discussionTimer').classList.add('hidden');
+            document.getElementById('votingSection').classList.remove('hidden');
+            startVoting();
+        }
+        // Начать голосование
+        function startVoting() {
+            gameState = 'voting';
+            updateGamePhase('Голосование');
+            
+            const votingOptions = document.getElementById('votingOptions');
+            votingOptions.innerHTML = '';
+            
+            // Добавляем варианты для голосования (все живые игроки кроме себя)
+            players.forEach((player, index) => {
+                if (player.isAlive && (index + 1) !== currentPlayerNumber) {
+                    const voteBtn = document.createElement('button');
+                    voteBtn.className = 'vote-btn';
+                    voteBtn.textContent = `${player.name} (${player.profession})`;
+                    voteBtn.dataset.playerId = player.id;
+                    
+                    voteBtn.addEventListener('click', function() {
+                        // Снимаем выделение со всех кнопок
+                        document.querySelectorAll('.vote-btn').forEach(btn => {
+                            btn.classList.remove('selected');
+                        });
+                        
+                        // Выделяем выбранную кнопку
+                        this.classList.add('selected');
+                        
+                        // Показываем подтверждение
+                        showVoteConfirmation(player.id);
+                    });
+                    
+                    votingOptions.appendChild(voteBtn);
+                }
+            });
+        }
+        
+        // Показать подтверждение голосования
+        function showVoteConfirmation(playerId) {
+            const player = players.find(p => p.id === playerId);
+            if (!player) return;
+            
+            // В реальной игре здесь можно отправить голос ведущему
+            // В этой версии просто показываем сообщение
+            document.getElementById('votingSection').innerHTML = `
+                <div class="results">
+                    <h3>Вы проголосовали за:</h3>
+                    <div style="font-size: 1.5rem; color: #ffcc00; margin: 15px 0;">
+                        ${player.name} (${player.profession})
+                    </div>
+                    <p>Сообщите свой выбор ведущему для подсчета голосов</p>
+                    <p>Ждите, пока ведущий объявит результаты</p>
+                </div>
+            `;
+        }
+        
+        // Показать результаты голосования (для ведущего)
+        function showVotingResults(voteResults) {
+            // voteResults - объект с голосами: {голосующий: цель}
+            // Сбрасываем голоса
+            players.forEach(player => {
+                player.votes = 0;
+            });
+            
+            // Считаем голоса
+            Object.values(voteResults).forEach(targetPlayerId => {
+                const player = players.find(p => p.id === targetPlayerId);
+                if (player) {
+                    player.votes++;
+                }
+            });
+            
+            // Определяем игрока с наибольшим количеством голосов
+            let maxVotes = 0;
+            let playersToEliminate = [];
+            
+            players.forEach(player => {
+                if (player.isAlive && player.votes > maxVotes) {
+                    maxVotes = player.votes;
+                    playersToEliminate = [player];
+                } else if (player.isAlive && player.votes === maxVotes && maxVotes > 0) {
+                    playersToEliminate.push(player);
+                }
+            });
+            
+            // Исключаем игрока(ов)
+            playersToEliminate.forEach(player => {
+                player.isAlive = false;
+                eliminatedPlayers.push(player);
+            });
+            
+            // Отображаем результаты
+            const votesList = document.getElementById('votesList');
+            votesList.innerHTML = '';
+            
+            players.forEach(player => {
+                if (player.isAlive) {
+                    const voteItem = document.createElement('div');
+                    voteItem.className = 'characteristic';
+                    voteItem.innerHTML = `
+                        <span class="char-name">${player.name}:</span>
+                        <span class="char-value">${player.votes} голосов</span>
+                    `;
+                    votesList.appendChild(voteItem);
+                }
+            });
+            
+            // Показываем исключенных
+            if (playersToEliminate.length > 0) {
+                const eliminatedText = document.createElement('div');
+                eliminatedText.style.marginTop = '15px';
+                eliminatedText.style.padding = '10px';
+                eliminatedText.style.background = 'rgba(231, 76, 60, 0.2)';
+                eliminatedText.style.borderRadius = '10px';
+                eliminatedText.innerHTML = `<strong>Исключены:</strong> ${playersToEliminate.map(p => p.name).join(', ')}`;
+                votesList.appendChild(eliminatedText);
+            }
+            
+            document.getElementById('votingResults').classList.remove('hidden');
+            document.getElementById('votingSection').classList.add('hidden');
+            
+            // Проверяем, не закончилась ли игра
+            const alivePlayers = players.filter(p => p.isAlive).length;
+            if (alivePlayers <= bunkerSize) {
+                setTimeout(endGame, 3000);
+            }
+        }
+        
+        // Завершение игры
+        function endGame() {
+            gameState = 'end';
+            updateGamePhase('Завершено');
+            
+            const alivePlayers = players.filter(p => p.isAlive);
+            const eliminated = players.filter(p => !p.isAlive);
+            
+            document.getElementById('votingResults').classList.add('hidden');
+            document.getElementById('finalResults').classList.remove('hidden');
+            
+            // Определяем победителей
+            if (alivePlayers.length <= bunkerSize) {
+                document.getElementById('winnerText').textContent = 
+                    `Победители (${alivePlayers.length} из ${bunkerSize} мест)`;
+                
+                // Показываем выживших
+                const survivorsList = document.getElementById('survivorsList');
+                survivorsList.innerHTML = '';
+                
+                alivePlayers.forEach(player => {
+                    const survivorCard = document.createElement('div');
+                    survivorCard.className = 'player-card';
+                    survivorCard.innerHTML = `
+                        <div class="player-card-header">
+                            <div class="player-name">${player.name}</div>
+                            <div class="player-status alive">Спасен</div>
+                        </div>
+                        <div class="characteristics">
+                            <div class="characteristic">
+                                <span class="char-name">Профессия:</span>
+                                <span class="char-value">${player.profession}</span>
+                            </div>
+                            <div class="characteristic">
+                                <span class="char-name">Возраст:</span>
+                                <span class="char-value">${player.age} лет</span>
+                            </div>
+                        </div>
+                    `;
+                    survivorsList.appendChild(survivorCard);
+                });
+            }
+        }
+        
+        // Показать определенный экран
+        function showScreen(screenId) {
+            // Скрыть все экраны
+            startScreen.classList.remove('active');
+            createScreen.classList.remove('active');
+            joinScreen.classList.remove('active');
+            gameScreen.classList.remove('active');
+            singlePlayerScreen.classList.remove('active');
+            
+            // Показать нужный экран
+            document.getElementById(screenId).classList.add('active');
+            updateNavigation();
+        }
+        
+        // Обновление навигации
+        function updateNavigation() {
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => {
+                const screen = btn.getAttribute('data-screen');
+                btn.classList.toggle('active', document.getElementById(screen).classList.contains('active'));
+            });
+        }
+        
+        // Обновление фазы игры
+        function updateGamePhase(phase) {
+            gamePhase.textContent = phase;
+        }
+        
+        // Начать одиночную игру
+        function startSinglePlayer() {
+            const playerCount = parseInt(document.getElementById('singlePlayerCount').value) || 5;
+            const seed = generateSeed();
+            
+            // В одиночной игре пользователь - игрок 1
+            initGameFromSeed(seed, playerCount, 1, "Вы");
+            
+            // В одиночной игре показываем всех игроков
+            showAllPlayersInSingleMode();
+        }
+        
+        // Показать всех игроков в одиночном режиме
+        function showAllPlayersInSingleMode() {
+            const playerCardContainer = document.getElementById('playerCardContainer');
+            playerCardContainer.innerHTML = '';
+            
+            players.forEach((player, index) => {
+                const isCurrentPlayer = (index + 1) === currentPlayerNumber;
+            players.forEach((player, index) => {
+                const isCurrentPlayer = (index + 1) === currentPlayerNumber;
+                
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card';
+                playerCard.style.opacity = player.isAlive ? '1' : '0.6';
+                playerCard.innerHTML = `
+                    <div class="player-card-header">
+                        <div class="player-name">${player.name} ${isCurrentPlayer ? '(Вы)' : ''}</div>
+                        <div class="player-status ${player.isAlive ? 'alive' : 'eliminated'}">
+                            ${player.isAlive ? 'В игре' : 'Выбыл'}
+                        </div>
+                    </div>
+                    <div class="characteristics">
+                        <div class="characteristic">
+                            <span class="char-name">Профессия:</span>
+                            <span class="char-value">${player.profession}</span>
+                        </div>
+                        <div class="characteristic">
+                            <span class="char-name">Возраст:</span>
+                            <span class="char-value">${player.age} лет</span>
+                        </div>
+                        <div class="characteristic">
+                            <span class="char-name">Здоровье:</span>
+                            <span class="char-value">${player.health}</span>
+                        </div>
+                        <div class="characteristic">
+                            <span class="char-name">Хобби:</span>
+                            <span class="char-value">${player.hobby}</span>
+                        </div>
+                    </div>
+                `;
+                playerCardContainer.appendChild(playerCard);
+            });
+        }
+        
+        // Инициализация событий
+        document.addEventListener('DOMContentLoaded', function() {
+            // Начальный экран
+            document.getElementById('createGameBtn').addEventListener('click', function() {
+                showScreen('createScreen');
+            });
+            
+            document.getElementById('joinGameBtn').addEventListener('click', function() {
+                showScreen('joinScreen');
+            });
+            
+            document.getElementById('singlePlayerBtn').addEventListener('click', function() {
+                showScreen('singlePlayerScreen');
+            });
+            
+            // Создание игры
+            document.getElementById('generateSeedBtn').addEventListener('click', function() {
+                const playerCount = parseInt(document.getElementById('playerCount').value) || 6;
+                const customSeed = document.getElementById('customSeed').value;
+                
+                // Генерируем seed
+                let seed;
+                if (customSeed && customSeed.trim() !== '') {
+                    // Используем кастомный seed
+                    seed = customSeed.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 6);
+                    if (seed.length < 3) seed = generateSeed();
+                } else {
+                    seed = generateSeed();
+                }
+                
+                // Отображаем seed
+                document.getElementById('seedCodeDisplay').textContent = seed;
+                document.getElementById('seedCodeInstruction').textContent = seed;
+                document.getElementById('seedResult').classList.remove('hidden');
+            });
+            
+            document.getElementById('startCreatedGameBtn').addEventListener('click', function() {
+                const playerCount = parseInt(document.getElementById('playerCount').value) || 6;
+                const seed = document.getElementById('seedCodeDisplay').textContent;
+                
+                // Ведущий - игрок 1
+                initGameFromSeed(seed, playerCount, 1, "Ведущий");
+            });
+            
+            // Присоединение к игре
+            document.getElementById('joinWithSeedBtn').addEventListener('click', function() {
+                const seed = document.getElementById('inputSeedCode').value.toUpperCase();
+                const playerNumber = parseInt(document.getElementById('inputPlayerNumber').value);
+                const playerName = document.getElementById('inputPlayerName').value;
+                
+                if (!seed || seed.length < 3) {
+                    document.getElementById('joinError').textContent = "Введите корректный seed-код";
+                    document.getElementById('joinError').classList.remove('hidden');
+                    return;
+                }
+                
+                if (!playerNumber || playerNumber < 1 || playerNumber > 12) {
+                    document.getElementById('joinError').textContent = "Введите корректный номер игрока (1-12)";
+                    document.getElementById('joinError').classList.remove('hidden');
+                    return;
+                }
+                
+                // В этой упрощенной версии мы не проверяем валидность seed
+                // В реальной игре можно добавить проверку
+                const playerCount = 6; // По умолчанию 6 игроков
+                initGameFromSeed(seed, playerCount, playerNumber, playerName || `Игрок ${playerNumber}`);
+            });
+            
+            // Одиночная игра
+            document.getElementById('startSinglePlayerBtn').addEventListener('click', startSinglePlayer);
+            
+            // Игровые события
+            document.getElementById('startDiscussionBtn').addEventListener('click', startDiscussion);
+            
+            document.getElementById('nextRoundBtn').addEventListener('click', function() {
+                document.getElementById('votingResults').classList.add('hidden');
+                document.getElementById('votingSection').classList.remove('hidden');
+                startVoting();
+            });
+            
+            document.getElementById('newGameBtn').addEventListener('click', function() {
+                showScreen('startScreen');
+            });
+            
+            // Навигация
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const screenId = this.getAttribute('data-screen');
+                    showScreen(screenId);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
